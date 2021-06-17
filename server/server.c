@@ -16,11 +16,14 @@
 
 #include "my_signal.h"
 #include "logUtil.h"
+#include "get_num.h"
 
 int usage()
 {
-    char msg[] = "Usage: server unix_domain_path";
-    fprintf(stderr, "%s\n", msg);
+    char msg[] = "Usage: server [-b bufsize] unix_domain_path\n"
+                 "Options\n"
+                 "-b bufsize: bufsize.  suffix k for kilo, m for mega.  Default 32kB.\n";
+    fprintf(stderr, "%s", msg);
 
     return 0;
 }
@@ -35,15 +38,15 @@ void sig_chld(int signo)
     return;
 }
 
-int child_proc(int connfd)
+int child_proc(int connfd, int bufsize)
 {
-    char buf[64*1024];
-    memset(buf, 'X', sizeof(buf));
+    char *buf = malloc(bufsize);
+    memset(buf, 'X', bufsize);
     unsigned long total_bytes = 0;
     struct timeval start;
     gettimeofday(&start, NULL);
     for ( ; ; ) {
-        int n = write(connfd, buf, sizeof(buf));
+        int n = write(connfd, buf, bufsize);
         if (n < 0) {
             if ((errno == ECONNRESET) || (errno == EPIPE)) {
                 struct timeval stop, elapsed;
@@ -69,12 +72,29 @@ int child_proc(int connfd)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    int c;
+    int bufsize = 32*1024;
+    while ( (c = getopt(argc, argv, "b:h")) != -1) {
+        switch (c) {
+            case 'b':
+                bufsize = get_num(optarg);
+                break;
+            case 'h':
+                usage();
+                exit(0);
+            default:
+                break;
+        }
+    }
+    argc -= optind;
+    argv += optind;
+
+    if (argc != 1) {
         usage();
         exit(1);
     }
 
-    char *unix_domain_path = argv[1];
+    char *unix_domain_path = argv[0];
     int listenfd = socket(AF_LOCAL, SOCK_STREAM, 0);
 
     my_signal(SIGCHLD, sig_chld);
@@ -114,7 +134,7 @@ int main(int argc, char *argv[])
             if (close(listenfd) < 0) {
                 err(1, "close listenfd");
             }
-            child_proc(connfd /*, bufsize, sleep_usec, rate */);
+            child_proc(connfd, bufsize /*, sleep_usec, rate */);
             exit(0);
         }
         else {
