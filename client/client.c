@@ -75,8 +75,13 @@ int main(int argc, char *argv[])
         }
         int n = read(sockfd, buf, sizeof(buf));
         if (n < 0) {
-            fprintf(stderr, "read %ld bytes\n", total_bytes);
-            err(1, "read");
+            if (errno == EINTR) {
+                continue;
+            }
+            else {
+                fprintf(stderr, "read %ld bytes\n", total_bytes);
+                err(1, "read");
+            }
         }
         if (n == 0) { /* EOF */
             fprintf(stderr, "read %ld bytes\n", total_bytes);
