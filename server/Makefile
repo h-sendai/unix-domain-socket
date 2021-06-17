@@ -7,9 +7,9 @@ CFLAGS += -std=gnu99
 # LDFLAGS += -pthread
 
 all: $(PROG)
-# OBJS += $(PROG).o
-# OBJS += file.o
-# $(PROG): $(OBJS)
+OBJS += $(PROG).o
+OBJS += my_signal.o
+$(PROG): $(OBJS)
 
 clean:
 	rm -f *.o $(PROG)
