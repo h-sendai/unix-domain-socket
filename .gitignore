@@ -1,0 +1,6 @@
+.depend
+*.o
+*.d
+*~
+server/server
+client/client
