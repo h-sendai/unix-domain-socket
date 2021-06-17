@@ -40,11 +40,18 @@ int child_proc(int connfd)
     char buf[64*1024];
     memset(buf, 'X', sizeof(buf));
     unsigned long total_bytes = 0;
+    struct timeval start;
+    gettimeofday(&start, NULL);
     for ( ; ; ) {
         int n = write(connfd, buf, sizeof(buf));
         if (n < 0) {
             if ((errno == ECONNRESET) || (errno == EPIPE)) {
-                fprintfwt(stderr, "server: connection reset by client. wrote %ld bytes\n", total_bytes);
+                struct timeval stop, elapsed;
+                gettimeofday(&stop, NULL);
+                timersub(&stop, &start, &elapsed);
+                double elapsed_sec = elapsed.tv_sec + 0.000001*elapsed.tv_usec;
+                double transfer_rate_mb_s = total_bytes / elapsed_sec / 1024.0 / 1024.0;
+                fprintfwt(stderr, "server: connection reset by client. wrote %ld bytes. %.3f MB/s\n", total_bytes, transfer_rate_mb_s);
                 break;
             }
             else {
