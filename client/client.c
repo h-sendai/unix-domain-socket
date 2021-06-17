@@ -15,13 +15,16 @@
 
 #include "my_signal.h"
 #include "set_timer.h"
+#include "get_num.h"
 
 volatile sig_atomic_t has_alrm = 0;
 
 int usage()
 {
-    char msg[] = "Usage: client unix_domain_path";
-    fprintf(stderr, "%s\n", msg);
+    char msg[] = "Usage: client [-b bufsize] unix_domain_path\n"
+                 "Options\n"
+                 "-b bufsize: bufsize.  suffix k for kilo, m for mega.  Default 32kB\n";
+    fprintf(stderr, "%s", msg);
 
     return 0;
 }
@@ -34,12 +37,26 @@ void sig_alrm(int signo)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    int c;
+    int bufsize = 32*1024; /* default bufsize 32kB */
+    while ( (c = getopt(argc, argv, "b:")) != -1) {
+        switch (c) {
+            case 'b':
+                bufsize = get_num(optarg);
+                break;
+            default:
+                break;
+        }
+    }
+    argc -= optind;
+    argv += optind;
+
+    if (argc != 1) {
         usage();
         exit(1);
     }
 
-    char *unix_domain_path = argv[1];
+    char *unix_domain_path = argv[0];
     int sockfd = socket(AF_LOCAL, SOCK_STREAM, 0);
 
     struct sockaddr_un servaddr;
@@ -51,15 +68,19 @@ int main(int argc, char *argv[])
         err(1, "connect");
     }
 
-    my_signal(SIGALRM, sig_alrm);
-    set_timer(1, 0, 1, 0);
-
-    char buf[64*1024];
+    char *buf = malloc(bufsize);
+    if (buf == NULL) {
+        err(1, "malloc for buf");
+    }
     struct timeval start, elapsed, now, prev, interval;
     gettimeofday(&start, NULL);
     prev = start;
     unsigned long total_bytes = 0;
     unsigned long prev_total_bytes = 0;
+
+    my_signal(SIGALRM, sig_alrm);
+    set_timer(1, 0, 1, 0);
+
     for ( ; ; ) {
         if (has_alrm) {
             gettimeofday(&now, NULL);
@@ -73,7 +94,7 @@ int main(int argc, char *argv[])
             prev = now;
             has_alrm = 0;
         }
-        int n = read(sockfd, buf, sizeof(buf));
+        int n = read(sockfd, buf, bufsize);
         if (n < 0) {
             if (errno == EINTR) {
                 continue;
