@@ -10,6 +10,7 @@ all: $(PROG)
 OBJS += $(PROG).o
 OBJS += my_signal.o
 OBJS += logUtil.o
+OBJS += get_num.o
 $(PROG): $(OBJS)
 
 clean:
