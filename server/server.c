@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include "my_signal.h"
+#include "logUtil.h"
 
 int usage()
 {
@@ -42,11 +43,16 @@ int child_proc(int connfd)
     for ( ; ; ) {
         int n = write(connfd, buf, sizeof(buf));
         if (n < 0) {
-            fprintf(stderr, "wrote %ld bytes\n", total_bytes);
-            err(1, "read");
+            if ((errno == ECONNRESET) || (errno == EPIPE)) {
+                fprintfwt(stderr, "server: connection reset by client. wrote %ld bytes\n", total_bytes);
+                break;
+            }
+            else {
+                err(1, "write");
+            }
         }
         if (n == 0) { /* EOF */
-            fprintf(stderr, "wrote %ld bytes\n", total_bytes);
+            fprintfwt(stderr, "EOF. wrote %ld bytes\n", total_bytes);
             close(connfd);
         }
         total_bytes += n;

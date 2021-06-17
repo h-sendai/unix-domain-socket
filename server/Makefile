@@ -9,6 +9,7 @@ CFLAGS += -std=gnu99
 all: $(PROG)
 OBJS += $(PROG).o
 OBJS += my_signal.o
+OBJS += logUtil.o
 $(PROG): $(OBJS)
 
 clean:
