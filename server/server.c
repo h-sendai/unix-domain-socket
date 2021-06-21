@@ -18,9 +18,12 @@
 #include "logUtil.h"
 #include "get_num.h"
 
+#define DEFAULT_UNIX_DOMAIN_PATH "/tmp/unix"
+
 int usage()
 {
-    char msg[] = "Usage: server [-b bufsize] unix_domain_path\n"
+    char msg[] = "Usage: server [-b bufsize] [unix_domain_path]\n"
+                 "If unix_domain_path is not specified, use /tmp/unix as default\n"
                  "Options\n"
                  "-b bufsize: bufsize.  suffix k for kilo, m for mega.  Default 32kB.\n";
     fprintf(stderr, "%s", msg);
@@ -89,12 +92,19 @@ int main(int argc, char *argv[])
     argc -= optind;
     argv += optind;
 
-    if (argc != 1) {
+    char *unix_domain_path;
+    if (argc == 0) {
+        unix_domain_path = DEFAULT_UNIX_DOMAIN_PATH;
+        fprintf(stderr, "trying default unix domain path: %s\n", unix_domain_path);
+    }
+    else if (argc == 1) {
+        unix_domain_path = argv[0];
+    }
+    else {
         usage();
         exit(1);
     }
-
-    char *unix_domain_path = argv[0];
+        
     int listenfd = socket(AF_LOCAL, SOCK_STREAM, 0);
 
     my_signal(SIGCHLD, sig_chld);
