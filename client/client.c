@@ -41,11 +41,14 @@ int main(int argc, char *argv[])
 {
     int c;
     int bufsize = 32*1024; /* default bufsize 32kB */
-    while ( (c = getopt(argc, argv, "b:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:h")) != -1) {
         switch (c) {
             case 'b':
                 bufsize = get_num(optarg);
                 break;
+            case 'h':
+                usage();
+                exit(0);
             default:
                 break;
         }
