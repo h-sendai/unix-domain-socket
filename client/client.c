@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             timersub(&now, &start, &elapsed);
             double running_sec = elapsed.tv_sec + 0.000001*elapsed.tv_usec;
             double transfer_rate = (double) total_bytes / running_sec / 1024.0 / 1024.0;
-            printf("trasnfer_rate: %.3f MB/s runnging %.3f seconds\n", transfer_rate, running_sec);
+            printf("transfer_rate: %.3f MB/s runnging %.3f seconds\n", transfer_rate, running_sec);
             exit(0);
         }
         int n = read(sockfd, buf, bufsize);
