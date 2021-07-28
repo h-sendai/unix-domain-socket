@@ -19,6 +19,7 @@
 
 #define DEFAULT_UNIX_DOMAIN_PATH "/tmp/unix"
 volatile sig_atomic_t has_alrm = 0;
+volatile sig_atomic_t has_int  = 0;
 
 int usage()
 {
@@ -34,6 +35,12 @@ int usage()
 void sig_alrm(int signo)
 {
     has_alrm = 1;
+    return;
+}
+
+void sig_int(int signo)
+{
+    has_int = 1;
     return;
 }
 
@@ -89,7 +96,10 @@ int main(int argc, char *argv[])
     unsigned long total_bytes = 0;
     unsigned long prev_total_bytes = 0;
 
+    my_signal(SIGINT,  sig_int);
+    my_signal(SIGTERM, sig_int);
     my_signal(SIGALRM, sig_alrm);
+
     set_timer(1, 0, 1, 0);
 
     for ( ; ; ) {
@@ -104,6 +114,14 @@ int main(int argc, char *argv[])
             prev_total_bytes = total_bytes;
             prev = now;
             has_alrm = 0;
+        }
+        if (has_int) {
+            gettimeofday(&now, NULL);
+            timersub(&now, &start, &elapsed);
+            double running_sec = elapsed.tv_sec + 0.000001*elapsed.tv_usec;
+            double transfer_rate = (double) total_bytes / running_sec / 1024.0 / 1024.0;
+            printf("trasnfer_rate: %.3f MB/s runnging %.3f seconds\n", transfer_rate, running_sec);
+            exit(0);
         }
         int n = read(sockfd, buf, bufsize);
         if (n < 0) {
