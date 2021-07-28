@@ -16,6 +16,7 @@
 #include "my_signal.h"
 #include "set_timer.h"
 #include "get_num.h"
+#include "set_cpu.h"
 
 #define DEFAULT_UNIX_DOMAIN_PATH "/tmp/unix"
 volatile sig_atomic_t has_alrm = 0;
@@ -23,10 +24,12 @@ volatile sig_atomic_t has_int  = 0;
 
 int usage()
 {
-    char msg[] = "Usage: client [-b bufsize] [unix_domain_path]\n"
+    char msg[] = "Usage: client [-b bufsize] [-c cpu_num] [unix_domain_path]\n"
                  "If unix_domain_path is not specified, default unix domain path is /tmp/unix\n"
                  "Options\n"
-                 "-b bufsize: bufsize.  suffix k for kilo, m for mega.  Default 32kB\n";
+                 "-b bufsize: bufsize.  suffix k for kilo, m for mega.  Default 32kB\n"
+                 "-c cpu_num: set cpu number running on the client program.\n";
+
     fprintf(stderr, "%s", msg);
 
     return 0;
@@ -48,10 +51,14 @@ int main(int argc, char *argv[])
 {
     int c;
     int bufsize = 32*1024; /* default bufsize 32kB */
-    while ( (c = getopt(argc, argv, "b:h")) != -1) {
+    int cpu_num = -1;
+    while ( (c = getopt(argc, argv, "b:c:h")) != -1) {
         switch (c) {
             case 'b':
                 bufsize = get_num(optarg);
+                break;
+            case 'c':
+                cpu_num = strtol(optarg, NULL, 0);
                 break;
             case 'h':
                 usage();
@@ -73,6 +80,12 @@ int main(int argc, char *argv[])
     else {
         usage();
         exit(1);
+    }
+
+    if (cpu_num != -1) {
+        if (set_cpu(cpu_num) < 0) {
+            exit(1);
+        }
     }
 
     int sockfd = socket(AF_LOCAL, SOCK_STREAM, 0);
