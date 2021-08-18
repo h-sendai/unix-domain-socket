@@ -57,7 +57,8 @@ int child_proc(int connfd, int bufsize)
                 timersub(&stop, &start, &elapsed);
                 double elapsed_sec = elapsed.tv_sec + 0.000001*elapsed.tv_usec;
                 double transfer_rate_mb_s = total_bytes / elapsed_sec / 1024.0 / 1024.0;
-                fprintfwt(stderr, "server: connection reset by client. wrote %ld bytes. %.3f MB/s\n", total_bytes, transfer_rate_mb_s);
+                double transfer_rate_gbps = total_bytes * 8 / elapsed_sec / 1000000000.0;
+                fprintfwt(stderr, "server: connection reset by client. wrote %ld bytes. %.3f MB/s %.3f Gbps\n", total_bytes, transfer_rate_mb_s, transfer_rate_gbps);
                 break;
             }
             else {

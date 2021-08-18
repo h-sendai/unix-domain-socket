@@ -122,8 +122,9 @@ int main(int argc, char *argv[])
             timersub(&now, &prev,  &interval);
             unsigned long interval_bytes = total_bytes - prev_total_bytes;
             double interval_sec = interval.tv_sec + 0.000001*interval.tv_usec;
-            double transfer_rate = (double) interval_bytes / (double) interval_sec / 1024.0 / 1024.0;
-            printf("%ld.%06ld %.3f MB/s\n", elapsed.tv_sec, elapsed.tv_usec, transfer_rate);
+            double transfer_rate      = (double) interval_bytes / (double) interval_sec / 1024.0 / 1024.0;
+            double transfer_rate_gbps = (double) interval_bytes * 8 / (double) interval_sec / 1000000000.0;
+            printf("%ld.%06ld %.3f MB/s %.3f Gbps\n", elapsed.tv_sec, elapsed.tv_usec, transfer_rate, transfer_rate_gbps);
             prev_total_bytes = total_bytes;
             prev = now;
             has_alrm = 0;
@@ -132,8 +133,9 @@ int main(int argc, char *argv[])
             gettimeofday(&now, NULL);
             timersub(&now, &start, &elapsed);
             double running_sec = elapsed.tv_sec + 0.000001*elapsed.tv_usec;
-            double transfer_rate = (double) total_bytes / running_sec / 1024.0 / 1024.0;
-            printf("transfer_rate: %.3f MB/s runnging %.3f seconds\n", transfer_rate, running_sec);
+            double transfer_rate      = (double) total_bytes / running_sec / 1024.0 / 1024.0;
+            double transfer_rate_gbps = (double) total_bytes * 8 / running_sec / 1000000000.0;
+            printf("transfer_rate: %.3f MB/s %.3f Gbps runnging %.3f seconds\n", transfer_rate, transfer_rate_gbps, running_sec);
             exit(0);
         }
         int n = read(sockfd, buf, bufsize);
